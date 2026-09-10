@@ -1,0 +1,67 @@
+{
+  "name": "spaceswitch",
+  "version": "1.0.0",
+  "description": "Native macOS Workspace & Context Switcher",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder build --mac",
+    "dist:dmg": "electron-builder build --mac dmg",
+    "pack": "electron-builder --dir"
+  },
+  "keywords": [
+    "macos",
+    "workspace",
+    "switcher",
+    "context-switcher",
+    "productivity"
+  ],
+  "author": "SpaceSwitch Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.0"
+  },
+  "build": {
+    "appId": "com.spaceswitch.app",
+    "productName": "SpaceSwitch",
+    "copyright": "Copyright © 2026 SpaceSwitch",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      },
+      "title": "Install SpaceSwitch"
+    },
+    "files": [
+      "index.html",
+      "styles.css",
+      "main.js",
+      "preload.js"
+    ]
+  }
+}
