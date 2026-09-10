@@ -1,8 +1,22 @@
 import SwiftUI
+import AppKit
 
 struct SidebarView: View {
     @EnvironmentObject var appState: AppState
     @State private var searchText: String = ""
+    @State private var showNewProfileSheet: Bool = false
+    @State private var newProfileName: String = ""
+    @State private var newProfileBrowser: String = "Google Chrome"
+    @State private var newProfileColor: String = "#E9407A"
+    @State private var newProfileIcon: String = "briefcase.fill"
+    
+    let colorPalette = [
+        "#E9407A", "#007AFF", "#AF52DE", "#30B0C7", "#FF9500", "#34C759", "#FF2D55", "#5856D6"
+    ]
+    
+    let iconOptions = [
+        "briefcase.fill", "house.fill", "paintbrush.fill", "terminal.fill", "envelope.fill", "folder.fill", "gamecontroller.fill", "chart.bar.fill"
+    ]
     
     var filteredProfiles: [WorkspaceProfile] {
         if searchText.isEmpty {
@@ -30,7 +44,7 @@ struct SidebarView: View {
                 .cornerRadius(6)
                 
                 Button(action: {
-                    appState.triggerToast("New Workspace creation sheet opened")
+                    showNewProfileSheet = true
                 }) {
                     HStack {
                         Image(systemName: "plus.circle.fill")
@@ -68,9 +82,16 @@ struct SidebarView: View {
                     .padding(.bottom, 4)
                     
                     ForEach(filteredProfiles) { profile in
-                        SidebarProfileRow(profile: profile, isActive: appState.activeProfileId == profile.id) {
-                            appState.selectProfile(id: profile.id)
-                        }
+                        SidebarProfileRow(
+                            profile: profile,
+                            isActive: appState.activeProfileId == profile.id,
+                            onSelect: {
+                                appState.selectProfile(id: profile.id)
+                            },
+                            onDelete: {
+                                appState.deleteProfile(id: profile.id)
+                            }
+                        )
                     }
                     
                     // APP DEEPLINKS Section
@@ -109,6 +130,75 @@ struct SidebarView: View {
             }
         }
         .background(VisualEffectView(material: .sidebar, blendingMode: .behindWindow))
+        .sheet(isPresented: $showNewProfileSheet) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Create New Workspace")
+                    .font(.system(size: 15, weight: .bold))
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Workspace Name")
+                        .font(.system(size: 12, weight: .medium))
+                    TextField("e.g. Research & Writing", text: $newProfileName)
+                        .textFieldStyle(.roundedBorder)
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Assigned Browser")
+                        .font(.system(size: 12, weight: .medium))
+                    Picker("", selection: $newProfileBrowser) {
+                        Text("Google Chrome").tag("Google Chrome")
+                        Text("Brave Browser").tag("Brave Browser")
+                        Text("Arc Browser").tag("Arc Browser")
+                        Text("Firefox").tag("Firefox")
+                        Text("Safari").tag("Safari")
+                    }
+                    .pickerStyle(.segmented)
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Theme Color")
+                        .font(.system(size: 12, weight: .medium))
+                    HStack(spacing: 10) {
+                        ForEach(colorPalette, id: \.self) { color in
+                            Circle()
+                                .fill(Color(hex: color))
+                                .frame(width: 22, height: 22)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white, lineWidth: newProfileColor == color ? 2 : 0)
+                                )
+                                .shadow(radius: newProfileColor == color ? 2 : 0)
+                                .onTapGesture {
+                                    newProfileColor = color
+                                }
+                        }
+                    }
+                }
+                
+                HStack {
+                    Button("Cancel") {
+                        showNewProfileSheet = false
+                    }
+                    Spacer()
+                    Button("Create Workspace") {
+                        let name = newProfileName.trimmingCharacters(in: .whitespacesAndNewlines)
+                        appState.createNewProfile(
+                            name: name.isEmpty ? "New Workspace" : name,
+                            browser: newProfileBrowser,
+                            colorHex: newProfileColor,
+                            icon: newProfileIcon
+                        )
+                        newProfileName = ""
+                        showNewProfileSheet = false
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color(hex: "#E9407A"))
+                }
+                .padding(.top, 8)
+            }
+            .padding(20)
+            .frame(width: 400)
+        }
     }
 }
 
@@ -116,6 +206,7 @@ struct SidebarProfileRow: View {
     var profile: WorkspaceProfile
     var isActive: Bool
     var onSelect: () -> Void
+    var onDelete: () -> Void
     
     var body: some View {
         Button(action: onSelect) {
@@ -155,6 +246,11 @@ struct SidebarProfileRow: View {
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(isActive ? Color(hex: "#E9407A").opacity(0.3) : Color.clear, lineWidth: 1)
             )
+            .contextMenu {
+                Button("Delete Profile", role: .destructive) {
+                    onDelete()
+                }
+            }
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 8)

@@ -5,8 +5,7 @@ struct ContentView: View {
     @State private var searchFieldText: String = ""
     
     var body: some View {
-        // Handled in SpaceSwitchApp
-        EmptyView()
+        MainSplitView()
     }
 }
 

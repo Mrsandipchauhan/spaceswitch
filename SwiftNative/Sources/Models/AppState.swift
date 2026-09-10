@@ -46,13 +46,98 @@ public class AppState: ObservableObject {
     }
     
     public var activeProfile: WorkspaceProfile {
-        profiles.first(where: { $0.id == activeProfileId }) ?? profiles[0]
+        get {
+            profiles.first(where: { $0.id == activeProfileId }) ?? (profiles.first ?? WorkspaceProfile.defaults[0])
+        }
+        set {
+            if let index = profiles.firstIndex(where: { $0.id == activeProfileId }) {
+                profiles[index] = newValue
+                saveStateToDisk()
+            }
+        }
     }
     
     public func selectProfile(id: String) {
         self.activeProfileId = id
         triggerToast("Switched to \(activeProfile.name) — State Saved")
         saveStateToDisk()
+    }
+    
+    public func createNewProfile(name: String, browser: String = "Google Chrome", colorHex: String = "#34C759", icon: String = "folder.fill") {
+        let newId = "profile_\(UUID().uuidString.prefix(6).lowercased())"
+        let newProfile = WorkspaceProfile(
+            id: newId,
+            name: name.isEmpty ? "New Workspace" : name,
+            colorHex: colorHex,
+            browser: browser,
+            hotkey: "⌃⇧\(min(profiles.count + 1, 9))",
+            virtualSpace: 1,
+            sfSymbolIcon: icon,
+            urls: [],
+            deeplinks: [],
+            envVars: [:]
+        )
+        profiles.append(newProfile)
+        self.activeProfileId = newId
+        saveStateToDisk()
+        triggerToast("Created workspace: \(newProfile.name)")
+    }
+    
+    public func deleteProfile(id: String) {
+        guard profiles.count > 1 else {
+            triggerToast("Cannot delete the only remaining profile")
+            return
+        }
+        profiles.removeAll(where: { $0.id == id })
+        if activeProfileId == id {
+            activeProfileId = profiles.first?.id ?? ""
+        }
+        saveStateToDisk()
+        triggerToast("Profile deleted")
+    }
+    
+    public func updateActiveBrowser(_ browser: String) {
+        if let idx = profiles.firstIndex(where: { $0.id == activeProfileId }) {
+            profiles[idx].browser = browser
+            saveStateToDisk()
+        }
+    }
+    
+    public func updateActiveVirtualSpace(_ space: Int) {
+        if let idx = profiles.firstIndex(where: { $0.id == activeProfileId }) {
+            profiles[idx].virtualSpace = space
+            saveStateToDisk()
+        }
+    }
+    
+    public func addUrlToActiveProfile(title: String, urlString: String) {
+        if let idx = profiles.firstIndex(where: { $0.id == activeProfileId }) {
+            profiles[idx].urls.append(WorkspaceUrlItem(title: title, urlString: urlString))
+            saveStateToDisk()
+            triggerToast("Added URL to \(profiles[idx].name)")
+        }
+    }
+    
+    public func removeUrlFromActiveProfile(id: UUID) {
+        if let idx = profiles.firstIndex(where: { $0.id == activeProfileId }) {
+            profiles[idx].urls.removeAll(where: { $0.id == id })
+            saveStateToDisk()
+        }
+    }
+    
+    public func addEnvVarToActiveProfile(key: String, value: String) {
+        if let idx = profiles.firstIndex(where: { $0.id == activeProfileId }) {
+            profiles[idx].envVars[key] = value
+            saveStateToDisk()
+            triggerToast("Added ENV: \(key)")
+        }
+    }
+    
+    public func removeEnvVarFromActiveProfile(key: String) {
+        if let idx = profiles.firstIndex(where: { $0.id == activeProfileId }) {
+            profiles[idx].envVars.removeValue(forKey: key)
+            saveStateToDisk()
+        }
     }
     
     public func triggerToast(_ message: String) {

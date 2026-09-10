@@ -1,7 +1,18 @@
 import SwiftUI
+import AppKit
 
 struct AppsAndBrowserView: View {
     @EnvironmentObject var appState: AppState
+    @State private var showAddUrlSheet: Bool = false
+    @State private var newUrlTitle: String = ""
+    @State private var newUrlAddress: String = "https://"
+    
+    var browserBinding: Binding<String> {
+        Binding<String>(
+            get: { appState.activeProfile.browser },
+            set: { appState.updateActiveBrowser($0) }
+        )
+    }
     
     var body: some View {
         ScrollView {
@@ -18,7 +29,7 @@ struct AppsAndBrowserView: View {
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
-                            Picker("", selection: .constant("Google Chrome")) {
+                            Picker("", selection: browserBinding) {
                                 Text("Google Chrome").tag("Google Chrome")
                                 Text("Brave Browser").tag("Brave Browser")
                                 Text("Arc Browser").tag("Arc Browser")
@@ -56,16 +67,26 @@ struct AppsAndBrowserView: View {
                                     }
                                 }) {
                                     Image(systemName: "arrow.up.right.square")
+                                        .foregroundColor(Color(hex: "#007AFF"))
+                                }
+                                .buttonStyle(.plain)
+                                .help("Open in browser")
+                                
+                                Button(action: {
+                                    appState.removeUrlFromActiveProfile(id: urlItem.id)
+                                }) {
+                                    Image(systemName: "trash")
                                         .foregroundColor(.secondary)
                                 }
                                 .buttonStyle(.plain)
+                                .help("Remove URL")
                             }
                             .padding(12)
                             Divider()
                         }
                         
                         Button(action: {
-                            appState.triggerToast("Add URL sheet opened")
+                            showAddUrlSheet = true
                         }) {
                             HStack {
                                 Image(systemName: "plus.circle")
@@ -118,6 +139,38 @@ struct AppsAndBrowserView: View {
                 }
             }
             .padding(20)
+        }
+        .sheet(isPresented: $showAddUrlSheet) {
+            VStack(spacing: 16) {
+                Text("Add Workspace URL")
+                    .font(.system(size: 14, weight: .bold))
+                
+                TextField("Title (e.g. GitHub Repository)", text: $newUrlTitle)
+                    .textFieldStyle(.roundedBorder)
+                
+                TextField("URL (e.g. https://github.com)", text: $newUrlAddress)
+                    .textFieldStyle(.roundedBorder)
+                
+                HStack {
+                    Button("Cancel") {
+                        showAddUrlSheet = false
+                    }
+                    Spacer()
+                    Button("Add URL") {
+                        if !newUrlAddress.isEmpty {
+                            let title = newUrlTitle.isEmpty ? newUrlAddress : newUrlTitle
+                            appState.addUrlToActiveProfile(title: title, urlString: newUrlAddress)
+                            newUrlTitle = ""
+                            newUrlAddress = "https://"
+                            showAddUrlSheet = false
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color(hex: "#007AFF"))
+                }
+            }
+            .padding(20)
+            .frame(width: 380)
         }
     }
 }

@@ -3,6 +3,41 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     
+    var launchAtLoginBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: { appState.launchAtLogin },
+            set: { appState.launchAtLogin = $0; appState.saveStateToDisk() }
+        )
+    }
+    
+    var autoRestoreBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: { appState.autoRestoreOnBoot },
+            set: { appState.autoRestoreOnBoot = $0; appState.saveStateToDisk() }
+        )
+    }
+    
+    var keepAliveBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: { appState.keepAliveInMenuBar },
+            set: { appState.keepAliveInMenuBar = $0; appState.saveStateToDisk() }
+        )
+    }
+    
+    var quitIrrelevantBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: { appState.quitIrrelevantApps },
+            set: { appState.quitIrrelevantApps = $0; appState.saveStateToDisk() }
+        )
+    }
+    
+    var askBeforeQuittingBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: { appState.askBeforeQuitting },
+            set: { appState.askBeforeQuitting = $0; appState.saveStateToDisk() }
+        )
+    }
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -12,21 +47,21 @@ struct SettingsView: View {
                         ToggleSettingRow(
                             name: "Launch at Login (macOS Auto-Start)",
                             desc: "Automatically launch SpaceSwitch when macOS boots up or user logs in",
-                            isOn: $appState.launchAtLogin
+                            isOn: launchAtLoginBinding
                         )
                         Divider()
                         
                         ToggleSettingRow(
                             name: "Auto-Restore Workspaces & Apps on Startup",
                             desc: "Reopen active workspace apps, URLs, env vars & window layout after Mac restart or lid wake",
-                            isOn: $appState.autoRestoreOnBoot
+                            isOn: autoRestoreBinding
                         )
                         Divider()
                         
                         ToggleSettingRow(
                             name: "Keep Alive in Menu Bar on Window Close",
                             desc: "Closing app window keeps daemon running in macOS menu bar",
-                            isOn: $appState.keepAliveInMenuBar
+                            isOn: keepAliveBinding
                         )
                         Divider()
                         
@@ -55,14 +90,14 @@ struct SettingsView: View {
                         ToggleSettingRow(
                             name: "Quit Irrelevant Apps",
                             desc: "Automatically close apps not in this profile's list when switching",
-                            isOn: $appState.quitIrrelevantApps
+                            isOn: quitIrrelevantBinding
                         )
                         Divider()
                         
                         ToggleSettingRow(
                             name: "Ask Before Quitting",
                             desc: "Show a confirmation before closing irrelevant apps",
-                            isOn: $appState.askBeforeQuitting
+                            isOn: askBeforeQuittingBinding
                         )
                     }
                 }
