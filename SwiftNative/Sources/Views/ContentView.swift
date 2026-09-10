@@ -4,7 +4,7 @@ struct ContentView: View {
     @EnvironmentObject var appState: AppState
     @State private var searchFieldText: String = ""
     
-    var body: some Scene {
+    var body: some View {
         // Handled in SpaceSwitchApp
         EmptyView()
     }
